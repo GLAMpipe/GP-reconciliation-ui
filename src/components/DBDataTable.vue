@@ -3,17 +3,18 @@
 
 		<template v-if="project && project.node.settings">
 			matched: {{stats.total - stats.non_matched}}/{{stats.total}}
-			<div v-if="data.length && stats.non_matched == 0" class="alert alert-success">All done!</div>
-			<b-table striped hover :items="data" :fields="fields">
+			<div v-if="stats.total && stats.non_matched == 0" class="alert alert-success">All done!</div>
+			<template v-if="data.length > 0">
+				<b-table striped hover :items="data" :fields="fields">
+					<template v-slot:[`cell(${suggestions_field})`]="data">
+						<div v-html="formatReconciliationResult(data.value, data.item)"></div>
+					</template>
 
-				<template v-slot:[`cell(${suggestions_field})`]="data">
-					<div v-html="formatReconciliationResult(data.value, data.item)"></div>
-				</template>
-				<template v-slot:[`cell(${match_field})`]="data">
-					<div v-html="formatReconciliationMatch(data.value, data.item)"></div>
-				</template>
-
-			</b-table>
+					<template v-slot:[`cell(${match_field})`]="data">
+						<div v-html="formatReconciliationMatch(data.value, data.item)"></div>
+					</template>
+				</b-table>
+			</template>
 		</template>
 		<div v-else>
 			<div class="alert alert-warning">Did not find reconciliation data! Did you run reconciliation node?</div>
@@ -31,7 +32,7 @@ export default {
 	props: ['show_only_non_matched', 'project'],
 	data() {
 		return {
-			stats: {total:-1, unmatched:0},
+			stats: {total:-1, non_matched:0},
 			data: [],
 			fields: [],
 			suggestions_field: '',
@@ -39,6 +40,9 @@ export default {
 		}
 	},
 	methods: {
+		formatNoMatch(wd_result, data) {
+			return `<button onclick="window.table.setSelection('${data._id}', 'none')" title="Click if there is no good suggestion" class="btn btn-outline-primary">No good match!</button>`
+		},
 		formatReconciliationResult(wd_result, data) {
 			var out = '<table>'
 			if(data[this.match_field]) {
@@ -48,38 +52,44 @@ export default {
 				for(var r of wd_result.result) {
 					if(r.match) {
 						out += `<b class="text-info">${r.name} ${r.id}</b>`
+						out += `<button onclick="window.table.setSelection('${data._id}', 'none')" title="Click if there is no good suggestion" class="btn btn-outline-primary">No good match!</button>`
 					} else {
 						var score = `${r.score}`
 						if(r.score == 100) score = `<b>${r.score}</b>`
-						out += `<tr><td><b>${r.name}</b></td><td> ${r.id} </td>`
+						out += `<tr><td style="width:35%"><b>${r.name}</b><br> (${this.getTypes(r.type)})</td>`
+						out += `<td><a target="_blank" href="https://www.wikidata.org/wiki/${r.id}">${r.id}</a></td>`
 						out += `<td>${score}`
 						for(var fe of r.features) {
 							out += `<div>${fe.id} : ${fe.value}</div>`
 						}
-						out += `</td><td><button onclick="window.table.setSelection('${data._id}', '${r.id}')" class="btn btn-primary" type="button">select</button></td></tr>`
+						out += `</td><td><button onclick="window.table.setSelection('${data._id}', '${r.id}')" class="btn btn-primary" type="button">select</button></td><tr>`
 					}
 				}
 			}
+			out += `<tr><td></td><td></td><td></td><td><button onclick="window.table.setSelection('${data._id}', 'none')" title="Click if there is no good suggestion" class="btn btn-outline-primary">No good match!</button></td></tr>`
 			return out + '</table>'
 		},
 		formatReconciliationMatch(wd_match, data) {
 			return this.pickWID(wd_match, data)
+		},
+		getTypes(types) {
+			var type_names = types.map(x => x.name)
+			return type_names.join(', ')
 		},
 		pickWID(wid, data) {
 			var out = ''
 			if(data[this.suggestions_field] && data[this.suggestions_field].result) {
 
 				if(wid === 'none') {
-					return 'no match found'
+					return 'No good match found!'
 				} else {
 					for(var r of data[this.suggestions_field].result) {
 						if(r.id == wid) {
 							out += `<b class="text-info">${r.name} (<a href="">${r.id}</a>)</b>`
 						}
-					}					
+					}
 				}
 			}
-			if(!out) out = `<button onclick="window.table.setSelection('${data._id}', 'none')" class="btn btn-outline-primary">no match found</button>`
 
 			return out
 		},

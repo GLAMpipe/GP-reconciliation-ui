@@ -35,6 +35,7 @@
 						Show only non-matched
 						</b-form-checkbox>
 					</div>
+					<!--
 					<br><table class="table b-table table-striped" v-if="project">
 						<tr>
 							<td>query field</td>
@@ -45,6 +46,7 @@
 							<td>{{project.node.settings.in_class_select}}</td>
 						</tr>
 					</table>
+				-->
 				</b-card>
 			</b-col>
 
@@ -74,7 +76,10 @@ export default {
 		}
 	},
 	mounted: async function () {
-		this.project = await web.getProject()
+		const params = new URLSearchParams(window.location.search);
+		const node_id = params.get("node");
+		if(!node_id) this.error = 'Node URL parameter missing! This app must be open from reconciliation node.'
+		else this.project = await web.getProject()
 	}
 }
 </script>
