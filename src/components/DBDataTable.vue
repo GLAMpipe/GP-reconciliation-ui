@@ -51,8 +51,9 @@ export default {
 			if(wd_result.result) {
 				for(var r of wd_result.result) {
 					if(r.match) {
-						out += `<b class="text-info">${r.name} ${r.id}</b>`
-						out += `<button onclick="window.table.setSelection('${data._id}', 'none')" title="Click if there is no good suggestion" class="btn btn-outline-primary">No good match!</button>`
+						out += `<tr><td><span class="badge badge-success"> match!</span> <b class="text-info">${r.name} </b></td>`
+						out += `<td><a target="_blank" href="https://www.wikidata.org/wiki/${r.id}">${r.id}</a></td><td></td>`
+						out += `<td><button onclick="window.table.setSelection('${data._id}', '${r.id}')" class="btn btn-primary" type="button">select</button></td></tr>`
 					} else {
 						var score = `${r.score}`
 						if(r.score == 100) score = `<b>${r.score}</b>`
@@ -81,7 +82,7 @@ export default {
 			if(data[this.suggestions_field] && data[this.suggestions_field].result) {
 
 				if(wid === 'none') {
-					return 'No good match found!'
+					return '<div class="badge badge-warning">No good match found!</div>'
 				} else {
 					for(var r of data[this.suggestions_field].result) {
 						if(r.id == wid) {
@@ -89,6 +90,7 @@ export default {
 						}
 					}
 				}
+				if(out === '') out = '<div class="badge badge-danger">Not matched!</div>'
 			}
 
 			return out
